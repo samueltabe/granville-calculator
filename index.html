@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mini-Grid ROI Calculator v3 – With Financing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-soft: #0b1020;
+      --card: #111827;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.15);
+      --accent-strong: rgba(34, 197, 94, 0.35);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #f97373;
+      --border: #1f2937;
+      --radius-xl: 18px;
+      --radius-lg: 14px;
+      --shadow-soft: 0 22px 40px rgba(0, 0, 0, 0.55);
+      --shadow-button: 0 14px 30px rgba(34, 197, 94, 0.35);
+      --gap: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #111827 0, #020617 55%, #000 100%);
+      color: var(--text);
+      padding: 32px 18px 40px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app-shell {
+      max-width: 1180px;
+      width: 100%;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 30px;
+      letter-spacing: 0.03em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      max-width: 780px;
+      margin-bottom: 24px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--gap);
+      margin-bottom: 18px;
+    }
+
+    @media (max-width: 960px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, #1f2937 0, #020617 60%);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border);
+      padding: 18px 18px 16px;
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -80px;
+      background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.06), transparent 60%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+    }
+
+    .card-tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: #9ca3af;
+    }
+
+    .field-group {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 14px;
+      position: relative;
+      z-index: 1;
+    }
+
+    @media (max-width: 640px) {
+      .field-group {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .field input {
+      background: rgba(15, 23, 42, 0.92);
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      padding: 7px 12px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      transition: border 0.13s ease, box-shadow 0.13s ease,
+        background 0.13s ease, transform 0.05s ease;
+    }
+
+    .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.45);
+      background: rgba(15, 23, 42, 1);
+      transform: translateY(-0.5px);
+    }
+
+    .field small {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .pill-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+      margin-top: -6px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .pill-row span {
+      font-size: 11px;
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 999px;
+      padding: 3px 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      color: #9ca3af;
+    }
+
+    .cta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 14px 0 12px;
+    }
+
+    .cta-row small {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    button {
+      border-radius: 999px;
+      border: none;
+      padding: 9px 20px;
+      background: radial-gradient(circle at top left, #4ade80 0, #22c55e 40%, #16a34a 100%);
+      color: #022c22;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 12px;
+      cursor: pointer;
+      box-shadow: var(--shadow-button);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+      box-shadow: 0 20px 38px rgba(34, 197, 94, 0.4);
+    }
+
+    button:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: 0 10px 24px rgba(34, 197, 94, 0.35);
+    }
+
+    .results {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--gap);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 1040px) {
+      .results {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .results {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .result-card {
+      background: linear-gradient(145deg, #020617 0, #020617 60%, #022c22 100%);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      padding: 12px 13px 11px;
+      box-shadow: 0 18px 32px rgba(0, 0, 0, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-card::before {
+      content: "";
+      position: absolute;
+      inset: -70px;
+      background: radial-gradient(circle at top left, var(--accent-soft), transparent 60%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .result-label {
+      font-size: 11px;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 4px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .result-main {
+      font-size: 15px;
+      font-weight: 600;
+      position: relative;
+      z-index: 1;
+    }
+
+    .result-sub {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 2px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .result-highlight {
+      color: #bbf7d0;
+      font-weight: 600;
+    }
+
+    .notes {
+      margin-top: 12px;
+      font-size: 10.5px;
+      color: var(--muted);
+      line-height: 1.5;
+      max-width: 900px;
+    }
+
+    code {
+      background: rgba(15, 23, 42, 0.85);
+      padding: 1px 5px;
+      border-radius: 999px;
+      font-size: 10px;
+      border: 1px solid rgba(55, 65, 81, 0.85);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(34, 197, 94, 0.5);
+      background: rgba(22, 163, 74, 0.15);
+      color: #bbf7d0;
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <h1>Mini-Grid ROI Calculator v3</h1>
+  <div class="subtitle">
+    All values in ZAR and kW / kWp / kWh. Designed for large mini-grids (≥100 kWp) up to multi-MW scale.
+    This version includes <span class="badge">Annual Battery Degradation</span> and a full
+    <span class="badge">Financing Layer (Debt · Interest · Tenor)</span>.
+  </div>
+
+  <div class="grid">
+    <!-- SYSTEM SIZE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">System Size</div>
+        <div class="card-tag">kWp · kW · kWh</div>
+      </div>
+      <div class="field-group">
+        <div class="field">
+          <label for="pvSize">PV Size (kWp)</label>
+          <input id="pvSize" type="number" value="5000" step="1" />
+          <small>Installed DC capacity of the PV array.</small>
+        </div>
+        <div class="field">
+          <label for="pcsSize">PCS Size (kW)</label>
+          <input id="pcsSize" type="number" value="5000" step="1" />
+          <small>Inverter / PCS rating connected to the grid/load.</small>
+        </div>
+        <div class="field">
+          <label for="batterySize">Battery Size (kWh)</label>
+          <input id="batterySize" type="number" value="10000" step="1" />
+          <small>Nominal usable storage capacity (containerized BESS).</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- HARDWARE COSTS (TOTAL) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Total Hardware CAPEX</div>
+        <div class="card-tag">ZAR (ex VAT)</div>
+      </div>
+      <div class="pill-row">
+        <span>Enter total costs · Tool derives unit economics internally</span>
+      </div>
+      <div class="field-group">
+        <div class="field">
+          <label for="pvCostTotal">PV Cost – Total (R)</label>
+          <input id="pvCostTotal" type="number" value="9405000" step="1000" />
+          <small>All PV modules + mounting (if bundled).</small>
+        </div>
+        <div class="field">
+          <label for="pcsBatteryCostTotal">PCS/Battery – Total (R)</label>
+          <input id="pcsBatteryCostTotal" type="number" value="46790000" step="1000" />
+          <small>All-in landed cost for inverter(s) + BESS + container + HVAC.</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- TARIFF, ASSUMPTIONS & FINANCING -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Tariff, Assumptions & Financing</div>
+        <div class="card-tag">Revenue · BOS · O&M · Debt</div>
+      </div>
+      <div class="field-group">
+        <div class="field">
+          <label for="tariff">Tariff (R per kWh, ex VAT)</label>
+          <input id="tariff" type="number" value="2.80" step="0.01" />
+          <small>Blended selling price of energy.</small>
+        </div>
+        <div class="field">
+          <label for="specificYield">Specific Yield (kWh per kWp per year)</label>
+          <input id="specificYield" type="number" value="1700" step="10" />
+          <small>Annual PV yield based on irradiation and design.</small>
+        </div>
+        <div class="field">
+          <label for="usableFraction">Usable Fraction of PV Output (0–1)</label>
+          <input id="usableFraction" type="number" value="0.60" step="0.01" />
+          <small>Accounts for curtailment, clipping, other losses.</small>
+        </div>
+        <div class="field">
+          <label for="installPercent">BOS / Install (% of hardware CAPEX)</label>
+          <input id="installPercent" type="number" value="60" step="1" />
+          <small>Trenching, cables, transformers, civil works, EPC margin.</small>
+        </div>
+        <div class="field">
+          <label for="oAndMPercent">Annual O&M (% of total CAPEX)</label>
+          <input id="oAndMPercent" type="number" value="2.5" step="0.1" />
+          <small>Blended PV + BESS + HVAC + monitoring O&M.</small>
+        </div>
+        <div class="field">
+          <label for="batteryDegradation">Annual Battery Degradation (%/year)</label>
+          <input id="batteryDegradation" type="number" value="2.0" step="0.1" />
+          <small>Applied to energy sold over a 20-year project life.</small>
+        </div>
+        <div class="field">
+          <label for="debtShare">Debt Share (% of CAPEX)</label>
+          <input id="debtShare" type="number" value="70" step="1" />
+          <small>Portion funded by lenders (remainder is equity).</small>
+        </div>
+        <div class="field">
+          <label for="interestRate">Interest Rate (% per year)</label>
+          <input id="interestRate" type="number" value="14" step="0.1" />
+          <small>Nominal annual interest on project debt.</small>
+        </div>
+        <div class="field">
+          <label for="loanTenor">Loan Tenor (years)</label>
+          <input id="loanTenor" type="number" value="12" step="1" />
+          <small>Amortisation period for level annual payments.</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-row">
+    <small>
+      20-year analysis, simple (undiscounted) project cashflows.
+      Financing layer adds debt service, equity cashflows, payback, ROI and minimum DSCR.
+    </small>
+    <button id="calcButton">
+      <span>Calculate ROI</span>
+      <span>⮕</span>
+    </button>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results">
+    <div class="result-card">
+      <div class="result-label">Total System Size</div>
+      <div class="result-main" id="resultSize">–</div>
+      <div class="result-sub" id="resultSizeDetail">PV / PCS / Battery</div>
+    </div>
+
+    <div class="result-card">
+      <div class="result-label">Total System Cost (CAPEX)</div>
+      <div class="result-main" id="resultCapex">–</div>
+      <div class="result-sub" id="resultCapexDetail">Hardware &middot; BOS / install</div>
+    </div>
+
+    <div class="result-card">
+      <div class="result-label">Tariff & Energy</div>
+      <div class="result-main" id="resultTariff">–</div>
+      <div class="result-sub" id="resultEnergy">Annual Energy Sold (Year 1)</div>
+    </div>
+
+    <div class="result-card">
+      <div class="result-label">Cashflow, Payback & Financing</div>
+      <div class="result-main" id="resultCashflow">–</div>
+      <div class="result-sub" id="resultPayback">Payback, ROI, Equity & DSCR</div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <strong>Notes:</strong>
+    This tool assumes revenue is limited by PV generation. PCS/Battery/container cost is entered as a single all-in
+    value and combined with PV CAPEX to derive total hardware cost. BOS CAPEX scales as a percentage of hardware CAPEX.
+    Annual O&amp;M is a fixed percentage of total CAPEX. Annual energy sold in Year&nbsp;1 is reduced over time using
+    the <code>Annual Battery Degradation</code> input; project-level payback and ROI are computed over a 20-year life.
+    The financing layer assumes a level-payment amortising loan; equity cashflows are calculated after debt service and
+    used to derive equity payback, equity ROI and minimum DSCR during the loan tenor (screening-level only).
+  </div>
+</div>
+
+<script>
+  function parseNumber(id) {
+    const el = document.getElementById(id);
+    if (!el) return 0;
+    const val = (el.value || "").toString().replace(",", ".");
+    const num = parseFloat(val);
+    return isNaN(num) ? 0 : num;
+  }
+
+  function formatRand(value) {
+    return (
+      "R " +
+      value
+        .toFixed(0)
+        .replace(/\B(?=(\d{3})+(?!\d))/g, " ")
+    );
+  }
+
+  function formatNumber(value, decimals) {
+    return value
+      .toFixed(decimals)
+      .replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  }
+
+  // Simple bisection-based IRR calculator
+  function computeIRR(cashflows, minRate = -0.9, maxRate = 1.0, iterations = 80) {
+    function npv(rate) {
+      let total = 0;
+      for (let t = 0; t < cashflows.length; t++) {
+        total += cashflows[t] / Math.pow(1 + rate, t);
+      }
+      return total;
+    }
+
+    let low = minRate;
+    let high = maxRate;
+    let npvLow = npv(low);
+    let npvHigh = npv(high);
+
+    if (npvLow * npvHigh > 0) {
+      return null; // no sign change, IRR not in this range
+    }
+
+    for (let i = 0; i < iterations; i++) {
+      const mid = (low + high) / 2;
+      const npvMid = npv(mid);
+
+      if (Math.abs(npvMid) < 1e-7) {
+        return mid;
+      }
+
+      if (npvLow * npvMid < 0) {
+        high = mid;
+        npvHigh = npvMid;
+      } else {
+        low = mid;
+        npvLow = npvMid;
+      }
+    }
+    return (low + high) / 2;
+  }
+
+  function calculateROI() {
+    const pvSize = parseNumber("pvSize");
+    const pcsSize = parseNumber("pcsSize");
+    const batterySize = parseNumber("batterySize");
+
+    const pvCostTotal = parseNumber("pvCostTotal");
+    const pcsBatteryCostTotal = parseNumber("pcsBatteryCostTotal");
+
+    const tariff = parseNumber("tariff");
+    const specificYield = parseNumber("specificYield");
+    const usableFraction = parseNumber("usableFraction");
+    const installPercent = parseNumber("installPercent");
+    const oAndMPercent = parseNumber("oAndMPercent");
+    const batteryDegPercent = parseNumber("batteryDegradation");
+
+    const debtShare = parseNumber("debtShare");
+    const interestRate = parseNumber("interestRate");
+    const loanTenor = parseNumber("loanTenor");
+
+    const hardwareCapex = pvCostTotal + pcsBatteryCostTotal;
+    const bosCapex = hardwareCapex * (installPercent / 100);
+    const totalCapex = hardwareCapex + bosCapex;
+
+    const annualEnergyGross = pvSize * specificYield; // kWh/year
+    const annualEnergyYear1 = annualEnergyGross * usableFraction;
+
+    const oAndMAnnual = totalCapex * (oAndMPercent / 100);
+
+    const projectYears = 20;
+    const degRate = batteryDegPercent / 100;
+
+    // Unlevered project cashflows
+    let cumCashflow = 0;
+    let paybackYear = null;
+    let totalNetCashflow = 0;
+    let netCashflowYear1 = 0;
+
+    // Financing
+    const debtAmount = totalCapex * (debtShare / 100);
+    const equityAmount = totalCapex - debtAmount;
+    const r = interestRate / 100;
+    const n = Math.max(1, Math.round(loanTenor));
+    let annualDebtService = 0;
+
+    if (debtAmount > 0 && n > 0) {
+      if (r > 0) {
+        const pow = Math.pow(1 + r, n);
+        annualDebtService = debtAmount * (r * pow) / (pow - 1);
+      } else {
+        annualDebtService = debtAmount / n;
+      }
+    }
+
+    let equityCashflows = [];
+    equityCashflows.push(-equityAmount); // Year 0 equity outflow
+
+    let cumEquity = -equityAmount;
+    let equityPaybackYear = null;
+    let equityNetTotal = 0;
+    let minDSCR = Infinity;
+
+    for (let year = 1; year <= projectYears; year++) {
+      const energyThisYear =
+        annualEnergyYear1 * Math.pow(1 - degRate, year - 1);
+      const revenue = energyThisYear * tariff;
+      const netOperating = revenue - oAndMAnnual; // before debt
+
+      if (year === 1) {
+        netCashflowYear1 = netOperating;
+      }
+
+      totalNetCashflow += netOperating;
+      cumCashflow += netOperating;
+
+      if (paybackYear === null && cumCashflow >= totalCapex) {
+        const prevCum = cumCashflow - netOperating;
+        const remaining = totalCapex - prevCum;
+        const fraction = remaining / netOperating;
+        paybackYear = (year - 1) + fraction;
+      }
+
+      const debtServiceThisYear = year <= n ? annualDebtService : 0;
+      const equityCF = netOperating - debtServiceThisYear;
+      equityCashflows.push(equityCF);
+      equityNetTotal += equityCF;
+      cumEquity += equityCF;
+
+      if (equityPaybackYear === null && cumEquity >= 0) {
+        const prevCumEq = cumEquity - equityCF;
+        const remainingEq = 0 - prevCumEq;
+        const fractionEq = remainingEq / equityCF;
+        equityPaybackYear = (year - 1) + fractionEq;
+      }
+
+      if (debtServiceThisYear > 0) {
+        const dscr = netOperating / debtServiceThisYear;
+        if (dscr < minDSCR) {
+          minDSCR = dscr;
+        }
+      }
+    }
+
+    const totalROI = (totalNetCashflow / totalCapex) * 100;
+    const paybackDisplay =
+      paybackYear === null
+        ? "> " + projectYears + " yrs"
+        : paybackYear.toFixed(2) + " yrs";
+
+    const equityROI =
+      equityAmount > 0 ? (equityNetTotal / equityAmount) * 100 : 0;
+    const equityPaybackDisplay =
+      equityAmount <= 0
+        ? "n/a"
+        : equityPaybackYear === null
+          ? "> " + projectYears + " yrs"
+          : equityPaybackYear.toFixed(2) + " yrs";
+
+    const irr = equityAmount > 0 ? computeIRR(equityCashflows, -0.9, 1.0, 80) : null;
+    const irrDisplay =
+      irr === null ? "n/a" : (irr * 100).toFixed(1) + "%";
+
+    const minDSCRDisplay =
+      minDSCR === Infinity ? "n/a" : minDSCR.toFixed(2) + "×";
+
+    // Update UI
+    document.getElementById("resultSize").textContent =
+      formatNumber(pvSize, 0) + " kWp PV";
+    document.getElementById("resultSizeDetail").innerHTML =
+      "PCS: " +
+      formatNumber(pcsSize, 0) +
+      " kW &middot; Battery: " +
+      formatNumber(batterySize, 0) +
+      " kWh";
+
+    document.getElementById("resultCapex").textContent =
+      formatRand(totalCapex);
+    document.getElementById("resultCapexDetail").innerHTML =
+      "Hardware: " +
+      formatRand(hardwareCapex) +
+      " &middot; BOS &amp; install: " +
+      formatRand(bosCapex);
+
+    document.getElementById("resultTariff").textContent =
+      "R " + tariff.toFixed(2) + " / kWh";
+    document.getElementById("resultEnergy").textContent =
+      formatNumber(annualEnergyYear1 / 1000, 1) +
+      " GWh / year (Year 1, after losses)";
+
+    document.getElementById("resultCashflow").textContent =
+      formatRand(netCashflowYear1) + " / year";
+
+    document.getElementById("resultPayback").innerHTML =
+      "Project payback: <span class=\"result-highlight\">" +
+      paybackDisplay +
+      "</span> &middot; Project ROI (20 yrs): <span class=\"result-highlight\">" +
+      totalROI.toFixed(1) +
+      "%</span><br/>" +
+      "Equity required: <span class=\"result-highlight\">" + formatRand(equityAmount) +
+      "</span> &middot; Equity payback: <span class=\"result-highlight\">" +
+      equityPaybackDisplay +
+      "</span><br/>" +
+      "Equity ROI (20 yrs): <span class=\"result-highlight\">" +
+      equityROI.toFixed(1) +
+      "%</span> &middot; Equity IRR: <span class=\"result-highlight\">" +
+      irrDisplay +
+      "</span> &middot; Min DSCR: <span class=\"result-highlight\">" +
+      minDSCRDisplay +
+      "</span>";
+  }
+
+  document
+    .getElementById("calcButton")
+    .addEventListener("click", calculateROI);
+
+  // Run once on load
+  calculateROI();
+</script>
+</body>
+</html>
